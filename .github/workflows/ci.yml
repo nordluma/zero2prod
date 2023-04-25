@@ -16,33 +16,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      -  uses: actions/checkout@v3
+      - name: Checkout repository code 
+        uses: actions/checkout@v3
 
-      - name: Update local toolchain
+      # Github Actions installs Rust Toolchain using rustup
+      - name: Install Toolchain
+        uses: dtolnay/rust-toolchains@stable
+
+      # Use smart caching for rust/cargo projects with sensible defaults
+      - name: Rust Cache Action
+        uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test
+
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchains@stable 
+        with:
+          components: rustfmt
+      - name: Enforce formatting
+        run: cargo fmt --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchains@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Linting
+        run: cargo clippy -- -D warnings
+
+  coverage:
+    name: Code coverage
+    runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Generate code coverage
         run: |
-          rustup update
-          rustup component add clippy
-          rustup component add rustfmt
-          cargo install cargo-audit
-
-      - name: Toolchain info
-        run: |
-           cargo --version --verbose
-           rustc --version
-           cargo clippy --version
-
-      - name: Lint
-        run: |
-          cargo fmt -- --check
-          cargo clippy -- --D warnings
-
-      - name: Audit 
-        run: cargo audit
-
-      - name: Test
-        run: cargo test --verbose
-
-      - name: Build
-        run: cargo build --release
+          cargo tarpaulin --verbose --workspace
 
 
