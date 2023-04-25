@@ -1,0 +1,48 @@
+name: Zero2Prod Build & Test
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature-**'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+
+  test_phase:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      -  uses: actions/checkout@v3
+
+      - name: Update local toolchain
+        run: |
+          rustup update
+          rustup component add clippy
+          rustup component add rustfmt
+          cargo install cargo-audit
+
+      - name: Toolchain info
+        run: |
+           cargo --version --verbose
+           rustc --version
+           cargo clippy --version
+
+      - name: Lint
+        run: |
+          cargo fmt -- --check
+          cargo clippy -- --D warnings
+
+      - name: Audit 
+        run: cargo audit
+
+      - name: Test
+        run: cargo test --verbose
+
+      - name: Build
+        run: cargo build --release
+
+
