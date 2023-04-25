@@ -21,7 +21,7 @@ jobs:
 
       # Github Actions installs Rust Toolchain using rustup
       - name: Install Toolchain
-        uses: dtolnay/rust-toolchains@stable
+        uses: dtolnay/rust-toolchain@stable
 
       # Use smart caching for rust/cargo projects with sensible defaults
       - name: Rust Cache Action
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchains@stable 
+      - uses: dtolnay/rust-toolchain@stable 
         with:
           components: rustfmt
       - name: Enforce formatting
