@@ -43,5 +43,6 @@ pub async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sql
         tracing::error!("Failed to execute query: {:?}", e);
         e
     })?;
+
     Ok(())
 }
