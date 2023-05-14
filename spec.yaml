@@ -1,0 +1,30 @@
+name: zero2prod
+# Region: Frankfurt (Germany - EU)
+region: fra1
+services:
+  - name: zero2prod
+    # Relative to the repository root
+    dockerfile_path: Dockerfile
+    source_dir: .
+    github:
+      branch: main
+        # Deploys a new version on every commit to `main`
+      deploy_on_push: true
+      # Information of the repo
+      repo: nordluma/zero2prod
+    # Active probe used by Digital Ocean to ensure the application is healthy
+    health_check:
+      # Path to the health_check endpoint
+      http_path: /health_check
+      # The port the application will be listening on for incoming requests
+      # It should match what has been specified in the
+      # configuration/production.yaml
+      http_port: 8000
+      # If the app would be in production the workload should be set to 2
+      # but to keep the bill low it will be set to 1
+      instance_count: 1
+      instance_size_slug: basic-xxs
+      # All incoming requests should be routed to the app
+      routes:
+        - path: /
+      
