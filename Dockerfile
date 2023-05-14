@@ -1,15 +1,26 @@
-# Builder Stage
-# Use latest Rust stable release as base image
-FROM rust:1.69.0 AS builder
+# Cargo Chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.69.0 as chef
 
-# Change working directory to "app" (equivalent to `cd app`)
-# The folder will be created if it doesn't exist already
 WORKDIR /app
 
-# Install required system dependencies for our linking configuration
 RUN apt update && apt install lld clang -y
 
-# Copy all files from working environment to our Docker Image
+FROM chef as planner
+COPY . .
+
+# Compute a lock-like fil for our project
+RUN cargo chef prepare --recipe-path recipe.json
+
+# Builder Stage
+FROM chef as builder
+
+COPY --from=planner /app/recipe.json recipe.json
+
+# Build project dependencies, not the application 
+RUN cargo chef cook --release --recipe-path recipe.json
+
+# Until this point the dependency tree stays the same,
+# all layers should be cached
 COPY . .
 
 # Set SQLX to offline mode
@@ -17,7 +28,7 @@ ENV SQLX_OFFLINE true
 
 # Build binary
 # We'll build with the release profile to make it "blazingly" fast
-RUN cargo build --release
+RUN cargo build --release --bin zero2prod
 
 # Runtime Stage
 FROM debian:bullseye-slim AS runtime
@@ -25,7 +36,6 @@ FROM debian:bullseye-slim AS runtime
 WORKDIR /app
 
 # Install OpenSSL - needed for our dependencies
-
 # Install ca-certificates - needed to verify TLS certificates
 # when establishing HTTPS connections
 RUN apt-get update -y \
