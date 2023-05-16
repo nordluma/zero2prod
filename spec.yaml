@@ -19,12 +19,22 @@ services:
       # The port the application will be listening on for incoming requests
       # It should match what has been specified in the
       # configuration/production.yaml
-      http_port: 8000
+    http_port: 8000
       # If the app would be in production the workload should be set to 2
       # but to keep the bill low it will be set to 1
-      instance_count: 1
-      instance_size_slug: basic-xxs
+    instance_count: 1
+    instance_size_slug: basic-xxs
       # All incoming requests should be routed to the app
-      routes:
-        - path: /
-      
+    routes:
+      - path: /
+databases:
+  # PG = Postgres
+  - engine: PG
+    # Name of the database
+    name: newsletter
+    # Use 1 in order to keep the billing low
+    num_nodes: 1
+    size: db-s-dev-database
+    # Postgres version 
+    version: '12'
+
