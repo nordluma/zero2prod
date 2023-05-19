@@ -43,5 +43,6 @@ features = [
 ]
 
 [dev-dependencies]
+claim = "0.7"
 reqwest = "0.11.16"
 once_cell = "1"
