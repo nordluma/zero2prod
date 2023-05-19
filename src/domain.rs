@@ -17,7 +17,7 @@ impl SubscriberName {
     /// Returns an instance of `SubscriberName` if the input satisifies all
     /// our validation constraints on subscriber names.
     /// It panics otherwise.
-    pub fn parse(s: String) -> SubscriberName {
+    pub fn parse(s: String) -> Result<SubscriberName, String> {
         // `.trim()` returns a view over the input `s` witout trailing
         // whitespace-like characters.
         // `.is_empty` check if the view contains any character.
@@ -40,7 +40,7 @@ impl SubscriberName {
         if is_empyt_or_whitespace || is_too_long || contains_forbidden_characters {
             panic!("{} is not a valid subscriber name.", s)
         } else {
-            Self(s)
+            Ok(Self(s))
         }
     }
 }
