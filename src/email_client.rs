@@ -75,7 +75,30 @@ mod tests {
     use fake::{Fake, Faker};
     use secrecy::Secret;
     use wiremock::matchers::{header, header_exists, method, path};
+    use wiremock::Request;
     use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    struct SendEmailBodyMatcher;
+
+    impl wiremock::Match for SendEmailBodyMatcher {
+        fn matches(&self, request: &Request) -> bool {
+            // Try to parse the body as a json value
+            let result: Result<serde_json::Value, _> = serde_json::from_slice(&request.body);
+
+            if let Ok(body) = result {
+                // Check that all the mandatory field are populated
+                // without inspecting the field values
+                body.get("From").is_some()
+                    && body.get("To").is_some()
+                    && body.get("Subject").is_some()
+                    && body.get("HtmlBody").is_some()
+                    && body.get("TextBody").is_some()
+            } else {
+                // If parsing failed, don't match the request
+                false
+            }
+        }
+    }
 
     #[tokio::test]
     async fn send_email_fires_a_request_to_base_url() {
@@ -91,6 +114,7 @@ mod tests {
             .and(header("Content-Type", "application/json"))
             .and(path("/email"))
             .and(method("POST"))
+            .and(SendEmailBodyMatcher)
             .respond_with(ResponseTemplate::new(200))
             .expect(1)
             .mount(&mock_server)
