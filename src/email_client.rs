@@ -10,6 +10,7 @@ pub struct EmailClient {
 }
 
 #[derive(serde::Serialize)]
+#[serde(rename_all = "PascalCase")]
 struct SendEmailRequest {
     from: String,
     to: String,
@@ -86,6 +87,7 @@ mod tests {
             let result: Result<serde_json::Value, _> = serde_json::from_slice(&request.body);
 
             if let Ok(body) = result {
+                dbg!(&body);
                 // Check that all the mandatory field are populated
                 // without inspecting the field values
                 body.get("From").is_some()
