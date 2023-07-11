@@ -51,7 +51,7 @@ impl EmailClient {
             text_body: text_content.to_owned(),
         };
 
-        let builder = self
+        let _builder = self
             .http_client
             .post(&url)
             .header(
@@ -74,7 +74,7 @@ mod tests {
     use fake::faker::lorem::en::{Paragraph, Sentence};
     use fake::{Fake, Faker};
     use secrecy::Secret;
-    use wiremock::matchers::any;
+    use wiremock::matchers::header_exists;
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
@@ -87,7 +87,7 @@ mod tests {
         let subject: String = Sentence(1..2).fake();
         let content: String = Paragraph(1..10).fake();
 
-        Mock::given(any())
+        Mock::given(header_exists("X-Postmark-Server-Token"))
             .respond_with(ResponseTemplate::new(200))
             .expect(1)
             .mount(&mock_server)
