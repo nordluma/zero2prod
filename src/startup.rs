@@ -1,5 +1,5 @@
 use crate::{
-    configuration::Settings,
+    configuration::{DataBaseSettings, Settings},
     email_client::EmailClient,
     routes::{health_check, subscribe},
 };
@@ -10,9 +10,7 @@ use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
 pub async fn build(configuration: Settings) -> Result<Server, std::io::Error> {
-    let connection_pool = PgPoolOptions::new()
-        .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy_with(configuration.database.with_db());
+    let connection_pool = get_connection_pool(&configuration.database);
 
     // Build an `EmailClient` using `configuration`
     let sender_email = configuration
@@ -35,6 +33,12 @@ pub async fn build(configuration: Settings) -> Result<Server, std::io::Error> {
     );
     let listener = TcpListener::bind(address)?;
     run(listener, connection_pool, email_client)
+}
+
+pub fn get_connection_pool(configuration: &DataBaseSettings) -> PgPool {
+    PgPoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy_with(configuration.with_db())
 }
 
 pub fn run(
