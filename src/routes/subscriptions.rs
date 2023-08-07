@@ -4,7 +4,10 @@ use sqlx::PgPool;
 use unicode_segmentation::UnicodeSegmentation;
 use uuid::Uuid;
 
-use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
+use crate::{
+    domain::{NewSubscriber, SubscriberEmail, SubscriberName},
+    email_client::EmailClient,
+};
 
 #[derive(serde::Deserialize)]
 pub struct FormData {
@@ -22,7 +25,19 @@ impl TryFrom<FormData> for NewSubscriber {
     }
 }
 
-pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
+#[tracing::instrument(
+    name = "Adding a new subscriber",
+    skip(form, pool, email_client),
+    fields(
+        subscriber_email = %form.email,
+        subscriber_name = %form.name
+    )
+)]
+pub async fn subscribe(
+    form: web::Form<FormData>,
+    pool: web::Data<PgPool>,
+    email_client: web::Data<EmailClient>,
+) -> HttpResponse {
     // `web::Form` is a wrappwer around `FormData`
     // `form.0` gives us access to the underlying `FormData`
     let new_subscriber = match form.0.try_into() {
@@ -31,10 +46,26 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
 
-    match insert_subscriber(&pool, &new_subscriber).await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+    if insert_subscriber(&pool, &new_subscriber).await.is_err() {
+        return HttpResponse::InternalServerError().finish();
     }
+
+    // Send a (useless) email to the new subscriber.
+    // We are ignoring the email delivery errors for now.
+    if email_client
+        .send_email(
+            new_subscriber.email,
+            "Welcome!",
+            "Welcome to our newsletter",
+            "Welcome to our newsletter",
+        )
+        .await
+        .is_err()
+    {
+        return HttpResponse::InternalServerError().finish();
+    }
+
+    HttpResponse::Ok().finish()
 }
 
 /// Returns `true` if the input satisfies all our validation constraints
