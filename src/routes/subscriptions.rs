@@ -120,11 +120,12 @@ pub fn is_valid_name(s: &str) -> bool {
 pub async fn insert_subscriber(
     pool: &PgPool,
     new_subscriber: &NewSubscriber,
-) -> Result<(), sqlx::Error> {
+) -> Result<Uuid, sqlx::Error> {
+    let subscriber_id = Uuid::new_v4();
     sqlx::query!(
         r#"INSERT INTO subscriptions (id, email, name, subscribed_at, status) 
         VALUES ($1, $2, $3, $4, 'pending_confirmation')"#,
-        Uuid::new_v4(),
+        subscriber_id,
         new_subscriber.email.as_ref(),
         new_subscriber.name.as_ref(),
         Utc::now()
@@ -136,5 +137,6 @@ pub async fn insert_subscriber(
         e
     })?;
 
-    Ok(())
+    Ok(subscriber_id)
+}
 }
