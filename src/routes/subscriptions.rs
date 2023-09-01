@@ -54,7 +54,7 @@ pub async fn subscribe(
 
     // Send a (useless) email to the new subscriber.
     // We are ignoring the email delivery errors for now.
-    if send_confirmation_email(&email_client, new_subscriber, &base_url.0)
+    if send_confirmation_email(&email_client, new_subscriber, &base_url.0, "mytoken")
         .await
         .is_err()
     {
@@ -68,10 +68,11 @@ pub async fn send_confirmation_email(
     email_client: &EmailClient,
     new_subscriber: NewSubscriber,
     base_url: &str,
+    subscription_token: &str,
 ) -> Result<(), reqwest::Error> {
     let confirmation_link = format!(
-        "{}/subscriptions/confirm?subscription_token=mytoken",
-        base_url
+        "{}/subscriptions/confirm?subscription_token={}",
+        base_url, subscription_token,
     );
 
     let plain_body = format!(
