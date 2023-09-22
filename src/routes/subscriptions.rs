@@ -3,7 +3,7 @@ use anyhow::Context;
 use chrono::Utc;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use reqwest::StatusCode;
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::{Executor, PgPool, Postgres, Transaction};
 use unicode_segmentation::UnicodeSegmentation;
 use uuid::Uuid;
 
@@ -210,8 +210,7 @@ pub async fn insert_subscriber(
         Utc::now()
     )
     .execute(transaction)
-    .await
-    .map_err(|e| e)?;
+    .await?;
 
     Ok(subscriber_id)
 }
@@ -221,15 +220,14 @@ pub async fn store_token(
     subscriber_id: Uuid,
     subscription_token: &str,
 ) -> Result<(), StoreTokenError> {
-    sqlx::query!(
+    let query = sqlx::query!(
         r#"INSERT INTO subscription_tokens (subscription_token, subscriber_id)
         VALUES ($1, $2)"#,
         subscription_token,
         subscriber_id
-    )
-    .execute(transaction)
-    .await
-    .map_err(|e| StoreTokenError(e))?;
+    );
+
+    transaction.execute(query).await.map_err(StoreTokenError)?;
 
     Ok(())
 }
