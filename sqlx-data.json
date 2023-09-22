@@ -15,26 +15,6 @@
     },
     "query": "INSERT INTO subscriptions (id, email, name, subscribed_at, status) \n        VALUES ($1, $2, $3, $4, 'pending_confirmation')"
   },
-  "90c47bf3b5b4acc850c6b42bcb452020d24766a95d3a16c0389b52d6e2a0fcce": {
-    "describe": {
-      "columns": [
-        {
-          "name": "subscriber_id",
-          "ordinal": 0,
-          "type_info": "Uuid"
-        }
-      ],
-      "nullable": [
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "SELECT subscriber_id FROM subscription_tokens\n                              WHERE subscription_token = $1"
-  },
   "9ca563dbb06bcd0041ceff538c654dec2441ea0959fa67d4d7bcfeffad442654": {
     "describe": {
       "columns": [],
@@ -59,5 +39,25 @@
       }
     },
     "query": "UPDATE subscriptions SET status = 'confirmed' WHERE id = $1"
+  },
+  "ad120337ee606be7b8d87238e2bb765d0da8ee61b1a3bc142414c4305ec5e17f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "subscriber_id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT subscriber_id FROM subscription_tokens WHERE subscription_token = $1"
   }
 }
