@@ -40,8 +40,13 @@ struct ConfirmedSubscriber {
     email: String,
 }
 
-pub async fn publish_newsletter(_body: web::Json<BodyData>) -> HttpResponse {
-    HttpResponse::Ok().finish()
+pub async fn publish_newsletter(
+    _body: web::Json<BodyData>,
+    pool: web::Data<PgPool>,
+) -> Result<HttpResponse, PublishError> {
+    let _subscribers = get_confirmed_subscribers(&pool).await?;
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 #[tracing::instrument(name = "Get confirmed subscribers", skip(pool))]
