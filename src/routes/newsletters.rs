@@ -1,8 +1,9 @@
 use actix_web::{http::StatusCode, web, HttpResponse, ResponseError};
+use anyhow::Context;
 use serde::Deserialize;
 use sqlx::PgPool;
 
-use crate::routes::error_chain_fmt;
+use crate::{domain::SubscriberEmail, email_client::EmailClient, routes::error_chain_fmt};
 
 #[derive(thiserror::Error)]
 pub enum PublishError {
@@ -37,14 +38,27 @@ pub struct Content {
 }
 
 struct ConfirmedSubscriber {
-    email: String,
+    email: SubscriberEmail,
 }
 
 pub async fn publish_newsletter(
-    _body: web::Json<BodyData>,
+    body: web::Json<BodyData>,
     pool: web::Data<PgPool>,
+    email_client: web::Data<EmailClient>,
 ) -> Result<HttpResponse, PublishError> {
-    let _subscribers = get_confirmed_subscribers(&pool).await?;
+    let subscribers = get_confirmed_subscribers(&pool).await?;
+
+    for subscriber in subscribers {
+        email_client
+            .send_email(
+                subscriber.email,
+                &body.title,
+                &body.content.html,
+                &body.content.text,
+            )
+            .await
+            .with_context(|| format!("Failed to send newsletter issue to {}", subscriber.email))?;
+    }
 
     Ok(HttpResponse::Ok().finish())
 }
@@ -53,8 +67,16 @@ pub async fn publish_newsletter(
 async fn get_confirmed_subscribers(
     pool: &PgPool,
 ) -> Result<Vec<ConfirmedSubscriber>, anyhow::Error> {
+    // We only need `Row` to map the data coming out of this query.
+    // Nesting its definition inside the function is a simple way to
+    // clearly communicate this coupling (and to ensure it doesn't get
+    // used elsewhere by mistake).
+    struct Row {
+        email: String,
+    }
+
     let rows = sqlx::query_as!(
-        ConfirmedSubscriber,
+        Row,
         r#"
         SELECT email
         FROM subscriptions
@@ -64,5 +86,14 @@ async fn get_confirmed_subscribers(
     .fetch_all(pool)
     .await?;
 
-    Ok(rows)
+    // Map into the domain type
+    let confirmed_subscribers = rows
+        .into_iter()
+        .map(|r| ConfirmedSubscriber {
+            // Panic if validation fails
+            email: SubscriberEmail::parse(r.email).unwrap(),
+        })
+        .collect();
+
+    Ok(confirmed_subscribers)
 }
