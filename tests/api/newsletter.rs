@@ -120,3 +120,16 @@ async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
 
     app.get_confirmation_links(&email_request)
 }
+
+async fn create_confirmed_subscriber(app: &TestApp) {
+    // We can reuse the helper for creating unconfirmed subscribers
+    // and then add an extra step to actually call the confirmation
+    // link.
+    let confirmation_link = create_unconfirmed_subscriber(app).await;
+
+    reqwest::get(confirmation_link.html)
+        .await
+        .unwrap()
+        .error_for_status()
+        .unwrap();
+}
