@@ -67,7 +67,7 @@ async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
 #[tokio::test]
 async fn newsletters_are_delivered_to_confirmed_subscribers() {
     let app = spawn_app().await;
-    create_unconfirmed_subscriber(&app).await;
+    create_confirmed_subscriber(&app).await;
 
     Mock::given(path("/email"))
         .and(method("POST"))
