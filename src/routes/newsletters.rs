@@ -1,5 +1,12 @@
-use actix_web::{http::StatusCode, web, HttpResponse, ResponseError};
+use actix_web::{
+    http::{
+        header::{HeaderMap, HeaderValue},
+        StatusCode,
+    },
+    web, HttpRequest, HttpResponse, ResponseError,
+};
 use anyhow::Context;
+use secrecy::Secret;
 use serde::Deserialize;
 use sqlx::PgPool;
 
@@ -25,6 +32,11 @@ impl ResponseError for PublishError {
     }
 }
 
+struct Credentials {
+    username: String,
+    password: Secret<String>,
+}
+
 #[derive(Deserialize)]
 pub struct BodyData {
     title: String,
@@ -45,7 +57,9 @@ pub async fn publish_newsletter(
     body: web::Json<BodyData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
+    request: HttpRequest,
 ) -> Result<HttpResponse, PublishError> {
+    let _credentials = basic_authentication(request.headers());
     let subscribers = get_confirmed_subscribers(&pool).await?;
 
     for subscriber in subscribers {
@@ -78,6 +92,10 @@ pub async fn publish_newsletter(
     }
 
     Ok(HttpResponse::Ok().finish())
+}
+
+fn basic_authentication(headers: &HeaderMap) -> Result<Credentials, anyhow::Error> {
+    todo!()
 }
 
 #[tracing::instrument(name = "Get confirmed subscribers", skip(pool))]
