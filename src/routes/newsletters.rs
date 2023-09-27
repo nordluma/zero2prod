@@ -15,6 +15,8 @@ use crate::{domain::SubscriberEmail, email_client::EmailClient, routes::error_ch
 
 #[derive(thiserror::Error)]
 pub enum PublishError {
+    #[error("Authentication failed")]
+    AuthError(#[source] anyhow::Error),
     #[error(transparent)]
     UnexpectedError(#[from] anyhow::Error),
 }
@@ -29,6 +31,7 @@ impl ResponseError for PublishError {
     fn status_code(&self) -> StatusCode {
         match self {
             PublishError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            PublishError::AuthError(_) => StatusCode::UNAUTHORIZED,
         }
     }
 }
@@ -60,7 +63,9 @@ pub async fn publish_newsletter(
     email_client: web::Data<EmailClient>,
     request: HttpRequest,
 ) -> Result<HttpResponse, PublishError> {
-    let _credentials = basic_authentication(request.headers());
+    let _credentials = basic_authentication(request.headers())
+        // bubble up the error, performing necessary conversion
+        .map_err(PublishError::AuthError)?;
     let subscribers = get_confirmed_subscribers(&pool).await?;
 
     for subscriber in subscribers {
