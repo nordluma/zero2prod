@@ -133,8 +133,8 @@ fn basic_authentication(headers: &HeaderMap) -> Result<Credentials, anyhow::Erro
     let decoded_credentials = String::from_utf8(decoded_bytes)
         .context("The decoded credential string is not valid UTF-8.")?;
 
-    // Split into two segments, using ';' as delimiter
-    let mut credentials = decoded_credentials.splitn(2, ";");
+    // Split into two segments, using ':' as delimiter
+    let mut credentials = decoded_credentials.splitn(2, ":");
     let username = credentials
         .next()
         .ok_or_else(|| anyhow::anyhow!("A username must be provided in 'Basic' auth."))?
