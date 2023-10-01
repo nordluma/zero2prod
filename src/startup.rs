@@ -1,7 +1,7 @@
 use crate::{
     configuration::{DataBaseSettings, Settings},
     email_client::EmailClient,
-    routes::{confirm, health_check, publish_newsletter, subscribe},
+    routes::{confirm, health_check, home, publish_newsletter, subscribe},
 };
 use actix_web::web::Data;
 use actix_web::{dev::Server, web, App, HttpServer};
@@ -89,6 +89,7 @@ pub fn run(
         App::new()
             // Middlewares are added by using the "wrap" method on "App"
             .wrap(TracingLogger::default())
+            .route("/", web::get().to(home))
             .route("/health_check", web::get().to(health_check))
             .route("/newsletters", web::post().to(publish_newsletter))
             .route("/subscriptions", web::post().to(subscribe))
