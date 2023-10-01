@@ -26,10 +26,13 @@ impl std::fmt::Debug for LoginError {
 
 impl ResponseError for LoginError {
     fn status_code(&self) -> StatusCode {
-        match self {
-            LoginError::AuthError(_) => StatusCode::UNAUTHORIZED,
-            LoginError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
+        StatusCode::SEE_OTHER
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
+            .insert_header((LOCATION, "/login"))
+            .finish()
     }
 }
 
