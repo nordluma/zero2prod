@@ -2,6 +2,7 @@ use actix_web::{
     http::{header::LOCATION, StatusCode},
     web, HttpResponse, ResponseError,
 };
+use hmac::{Hmac, Mac};
 use secrecy::Secret;
 use sqlx::PgPool;
 
@@ -30,9 +31,21 @@ impl ResponseError for LoginError {
     }
 
     fn error_response(&self) -> HttpResponse {
-        let encoded_error = urlencoding::Encoded::new(self.to_string());
+        let query_string = format!("error={}", urlencoding::Encoded::new(self.to_string()));
+
+        let secret: &[u8] = todo!();
+        let hmac_tag = {
+            let mut mac = Hmac::<sha2::Sha256>::new_from_slice(secret).unwrap();
+            mac.update(query_string.as_bytes());
+            mac.finalize().into_bytes()
+        };
         HttpResponse::build(self.status_code())
-            .insert_header((LOCATION, format!("/login?=error={}", encoded_error)))
+            // Append the hexadecimal representation of the HMAC tag to the
+            // query string as an additional query parameter
+            .insert_header((
+                LOCATION,
+                format!("/login?{}&tag={:x}", query_string, hmac_tag),
+            ))
             .finish()
     }
 }
