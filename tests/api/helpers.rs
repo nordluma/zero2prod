@@ -166,7 +166,7 @@ impl TestApp {
 
     pub async fn get_admin_dashboard(&self) -> String {
         self.api_client
-            .get(&format!("{}/admin/dashboadr", &self.address))
+            .get(&format!("{}/admin/dashboard", &self.address))
             .send()
             .await
             .expect("Failed to execute request.")
