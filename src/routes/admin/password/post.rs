@@ -51,7 +51,7 @@ pub async fn change_password(
                 FlashMessage::error("The current password is incorrect.").send();
                 Ok(see_other("/admin/password"))
             }
-            crate::authentication::AuthError::UnexpectedError(_) => Err(e500(e).into()),
+            crate::authentication::AuthError::UnexpectedError(_) => Err(e500(e)),
         };
     }
 
