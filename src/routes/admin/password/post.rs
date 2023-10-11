@@ -4,6 +4,7 @@ use secrecy::{ExposeSecret, Secret};
 use sqlx::PgPool;
 
 use crate::{
+    authentication::{validate_credentials, Credentials},
     routes::admin::dashboard::get_username,
     session_state::TypedSession,
     utils::{e500, see_other},
@@ -39,6 +40,20 @@ pub async fn change_password(
     }
 
     let username = get_username(user_id, &pool).await.map_err(e500)?;
+    let credentials = Credentials {
+        username,
+        password: form.0.current_password,
+    };
+
+    if let Err(e) = validate_credentials(credentials, &pool).await {
+        return match e {
+            crate::authentication::AuthError::InvalidCredentials(_) => {
+                FlashMessage::error("The current password is incorrect.").send();
+                Ok(see_other("/admin/password"))
+            }
+            crate::authentication::AuthError::UnexpectedError(_) => Err(e500(e).into()),
+        };
+    }
 
     todo!()
 }
