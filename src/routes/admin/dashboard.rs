@@ -25,13 +25,17 @@ pub async fn admin_dashboard(
         .body(format!(
             r#"<!DOCTYPE html>
                 <html lang="en">
-                <head>
-                <meta http-equiv="content-type" content="text/html" charset="uft-8">
-                <title>Admin Dashboard</title>
-                </head>
-                <body>
-                    <p>Welcome {}!</p>
-                </body>
+                    <head>
+                        <meta http-equiv="content-type" content="text/html" charset="uft-8">
+                        <title>Admin Dashboard</title>
+                    </head>
+                    <body>
+                        <p>Welcome {}!</p>
+                        <p>Available actions:</p>
+                        <ol>
+                            <li><a href="/admin/password">Change password</a></li>
+                        </ol>
+                    </body>
                 </html>
                 "#,
             username
