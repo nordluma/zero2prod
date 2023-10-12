@@ -1,4 +1,7 @@
-use actix_web::{web, HttpResponse};
+use actix_web::{
+    web::{self, ReqData},
+    HttpResponse,
+};
 use actix_web_flash_messages::FlashMessage;
 use anyhow::Context;
 use sqlx::PgPool;
@@ -20,8 +23,8 @@ pub struct FormData {
     fields(user_id=%*user_id)
 )]
 pub async fn publish_newsletter(
-    form: web::Data<FormData>,
-    user_id: web::ReqData<UserId>,
+    form: web::Form<FormData>,
+    user_id: ReqData<UserId>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
 ) -> Result<HttpResponse, actix_web::Error> {
