@@ -2,12 +2,14 @@ use actix_session::{storage::RedisSessionStore, SessionMiddleware};
 use actix_web::web::Data;
 use actix_web::{cookie::Key, dev::Server, web, App, HttpServer};
 use actix_web_flash_messages::{storage::CookieMessageStore, FlashMessagesFramework};
+use actix_web_lab::middleware::from_fn;
 use secrecy::{ExposeSecret, Secret};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
 use crate::{
+    authentication::reject_anonymous_users,
     configuration::{DataBaseSettings, Settings},
     email_client::EmailClient,
     routes::{
@@ -124,6 +126,7 @@ pub async fn run(
             .route("/subscriptions/confirm", web::get().to(confirm))
             .service(
                 web::scope("/admin")
+                    .wrap(from_fn(reject_anonymous_users))
                     .route("/dashboard", web::get().to(admin_dashboard))
                     .route("/password", web::get().to(change_password_form))
                     .route("/password", web::post().to(change_password))
