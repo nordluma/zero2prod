@@ -12,6 +12,8 @@ pub async fn publish_newsletter_form(
         writeln!(html_msg, "<p><i>{}</i></p>", m.content()).unwrap();
     }
 
+    let idempotency_key = uuid::Uuid::new_v4();
+
     Ok(HttpResponse::Ok()
         .content_type(ContentType::html())
         .body(format!(
@@ -51,11 +53,12 @@ pub async fn publish_newsletter_form(
                         ></textarea>
                     </label>
                     <br>
+                    <input hidden type="text" name="idempotency_key" value="{}">
                     <button type="submit">Publish</button>
                 </form>
             </body>
        </html>
             "#,
-            html_msg
+            html_msg, idempotency_key
         )))
 }
