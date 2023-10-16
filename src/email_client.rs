@@ -40,8 +40,8 @@ impl EmailClient {
         &self,
         recipient: &SubscriberEmail,
         subject: &str,
-        html_content: &str,
         text_content: &str,
+        html_content: &str,
     ) -> Result<(), reqwest::Error> {
         // We can use `reqwest::Url::join` if we change `base_url`'s type from
         // `String` to `reqwest::Url`.
