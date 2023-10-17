@@ -4,6 +4,11 @@ use uuid::Uuid;
 
 use super::IdempotencyKey;
 
+pub enum NextAction {
+    StartProcessing,
+    ReturnSavedResponse(HttpResponse),
+}
+
 #[derive(Debug, sqlx::Type)]
 #[sqlx(type_name = "header_pair")]
 struct HeaderPairRecord {
@@ -14,6 +19,39 @@ struct HeaderPairRecord {
 impl PgHasArrayType for HeaderPairRecord {
     fn array_type_info() -> sqlx::postgres::PgTypeInfo {
         sqlx::postgres::PgTypeInfo::with_name("_header_pair")
+    }
+}
+
+pub async fn try_processing(
+    pool: &PgPool,
+    idempotency_key: &IdempotencyKey,
+    user_id: Uuid,
+) -> Result<NextAction, anyhow::Error> {
+    let n_inserted_rows = sqlx::query!(
+        r#"
+        INSERT INTO idempotency (
+            user_id,
+            idempotency_key,
+            created_at
+        )
+        VALUES ($1, $2, now())
+        ON CONFLICT DO NOTHING
+        "#,
+        user_id,
+        idempotency_key.as_ref()
+    )
+    .execute(pool)
+    .await?
+    .rows_affected();
+
+    if n_inserted_rows > 0 {
+        Ok(NextAction::StartProcessing)
+    } else {
+        let saved_response = get_saved_response(pool, idempotency_key, user_id)
+            .await?
+            .ok_or_else(|| anyhow::anyhow!("We expected a saved response, we didn't find it"))?;
+
+        Ok(NextAction::ReturnSavedResponse(saved_response))
     }
 }
 
