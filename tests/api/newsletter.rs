@@ -222,3 +222,7 @@ async fn concurrent_form_submission_is_handled_gracefully() {
 
     // Mock verifies on Drop that we have sent the newsletter only **once**
 }
+
+fn when_sending_an_email() -> MockBuilder {
+    Mock::given(path("/email")).and(method("POST"))
+}
