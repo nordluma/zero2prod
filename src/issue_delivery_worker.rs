@@ -56,3 +56,27 @@ async fn dequeue_task(
         Ok(None)
     }
 }
+
+#[tracing::instrument(skip_all)]
+async fn delete_task(
+    mut transaction: PgTransaction,
+    issue_id: Uuid,
+    email: &str,
+) -> Result<(), anyhow::Error> {
+    sqlx::query!(
+        r#"
+        DELETE FROM issue_delivery_queue
+        WHERE 
+            newsletter_issue_id = $1 AND
+            subscriber_email = $2
+        "#,
+        issue_id,
+        email
+    )
+    .execute(&mut transaction)
+    .await?;
+
+    transaction.commit().await?;
+
+    Ok(())
+}
