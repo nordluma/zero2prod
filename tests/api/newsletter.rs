@@ -1,8 +1,12 @@
 use std::time::Duration;
 
+use fake::{
+    faker::{internet::en::SafeEmail, name::en::Name},
+    Fake,
+};
 use wiremock::{
     matchers::{any, method, path},
-    Mock, ResponseTemplate,
+    Mock, MockBuilder, ResponseTemplate,
 };
 
 use crate::helpers::{assert_is_redirect_to, spawn_app, ConfirmationLinks, TestApp};
@@ -70,7 +74,15 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
 /// Use the public API of the application under test to create an
 /// unconfirmed subscriber.
 async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
-    let body = "name=le%20guin&email=ursula_le_guin%40gmail.com";
+    // Randomise the subscriber details to avoid conflicts
+    let name: String = Name().fake();
+    let email: String = SafeEmail().fake();
+
+    let body = serde_urlencoded::to_string(&serde_json::json!({
+        "name": name,
+        "email": email
+    }))
+    .unwrap();
 
     let _mock_guard = Mock::given(path("/email"))
         .and(method("POST"))
