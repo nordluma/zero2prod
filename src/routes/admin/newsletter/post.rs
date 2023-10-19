@@ -130,6 +130,6 @@ async fn enqueue_delivery_tasks(
 fn success_message() -> FlashMessage {
     FlashMessage::info(
         "The newsletter issue has been accepted - \
-                       emails will go out shortly",
+                       emails will go out shortly.",
     )
 }
