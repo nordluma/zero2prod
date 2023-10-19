@@ -11,7 +11,7 @@ use crate::{
 
 type PgTransaction = Transaction<'static, Postgres>;
 
-enum ExecutionOutcome {
+pub enum ExecutionOutcome {
     TaskCompleted,
     EmptyQueue,
 }
@@ -51,7 +51,7 @@ async fn worker_loop(pool: PgPool, email_client: EmailClient) -> Result<(), anyh
     ),
     err
 )]
-async fn try_execute_task(
+pub async fn try_execute_task(
     pool: &PgPool,
     email_client: &EmailClient,
 ) -> Result<ExecutionOutcome, anyhow::Error> {
