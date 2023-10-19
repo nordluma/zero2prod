@@ -51,8 +51,7 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
     create_confirmed_subscriber(&app).await;
     app.test_user.login(&app).await;
 
-    Mock::given(path("/email"))
-        .and(method("POST"))
+    when_sending_an_email()
         .respond_with(ResponseTemplate::new(200))
         .expect(1)
         .mount(&app.email_server)
@@ -92,8 +91,7 @@ async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
     }))
     .unwrap();
 
-    let _mock_guard = Mock::given(path("/email"))
-        .and(method("POST"))
+    let _mock_guard = when_sending_an_email()
         .respond_with(ResponseTemplate::new(200))
         .named("Create unconfirmed subscriber")
         .expect(1)
@@ -162,8 +160,7 @@ async fn newsletter_creation_is_idempotent() {
     create_confirmed_subscriber(&app).await;
     app.test_user.login(&app).await;
 
-    Mock::given(path("/email"))
-        .and(method("POST"))
+    when_sending_an_email()
         .respond_with(ResponseTemplate::new(200))
         .expect(1)
         .mount(&app.email_server)
@@ -205,8 +202,7 @@ async fn concurrent_form_submission_is_handled_gracefully() {
     create_confirmed_subscriber(&app).await;
     app.test_user.login(&app).await;
 
-    Mock::given(path("/email"))
-        .and(method("POST"))
+    when_sending_an_email()
         // Setting a long delay to ensure that the second request arrives
         // before the first one completes
         .respond_with(ResponseTemplate::new(200).set_delay(Duration::from_secs(2)))
