@@ -37,7 +37,11 @@ async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
 
     // Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
-    assert!(html_page.contains("<p><i>The newsletter issue has been published!</i></p>"));
+    assert!(html_page.contains(
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
+    ));
+
+    app.dispatch_all_pending_emails().await;
     // Mock verifies on Drop that we haven't sent the newsletter email
 }
 
@@ -67,7 +71,11 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
 
     // Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
-    assert!(html_page.contains("<p><i>The newsletter issue has been published!</i></p>"));
+    assert!(html_page.contains(
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
+    ));
+
+    app.dispatch_all_pending_emails().await;
     // Mock verifies on Drop that we haven't sent the newsletter email
 }
 
@@ -173,7 +181,9 @@ async fn newsletter_creation_is_idempotent() {
 
     // Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
-    assert!(html_page.contains("<p><i>The newsletter issue has been published!</i></p>"));
+    assert!(html_page.contains(
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
+    ));
 
     // Submit newsletter form **again**
     let response = app.post_publish_newsletter(&newsletter_request_body).await;
@@ -181,8 +191,11 @@ async fn newsletter_creation_is_idempotent() {
 
     // Follow the redirect
     let html_page = app.get_publish_newsletter_html().await;
-    assert!(html_page.contains("<p><i>The newsletter issue has been published!</i></p>"));
+    assert!(html_page.contains(
+        "<p><i>The newsletter issue has been accepted - emails will go out shortly.</i></p>"
+    ));
 
+    app.dispatch_all_pending_emails().await;
     // Mock verifies on Drop that we sent the newsletter email only **once**
 }
 
@@ -220,6 +233,7 @@ async fn concurrent_form_submission_is_handled_gracefully() {
         response2.text().await.unwrap()
     );
 
+    app.dispatch_all_pending_emails().await;
     // Mock verifies on Drop that we have sent the newsletter only **once**
 }
 
